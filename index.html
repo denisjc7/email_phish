@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Phish or Legit? – Phishing Awareness Game</title>
+    <style>
+        /* --- Reset & Global --- */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            background: #0b1a2f;
+            color: #e0f0ff;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+        }
+
+        /* --- Layout --- */
+        .app {
+            width: 100%;
+            max-width: 520px;
+            background: #122b44;
+            border-radius: 2rem;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.5);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: #1a3a5c;
+            padding: 1.5rem 1.5rem 1rem;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 1.8rem;
+            letter-spacing: -0.5px;
+        }
+        .header .sub {
+            font-size: 0.95rem;
+            opacity: 0.8;
+            margin-top: 0.25rem;
+        }
+
+        .progress-area {
+            padding: 0.5rem 1.5rem 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+        .progress-bar-bg {
+            flex: 1;
+            height: 6px;
+            background: #1e4d74;
+            border-radius: 3px;
+            margin-left: 0.75rem;
+            overflow: hidden;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: #4fc3f7;
+            transition: width 0.3s;
+            border-radius: 3px;
+        }
+
+        .email-card {
+            margin: 1.5rem;
+            padding: 1.5rem;
+            background: #f0f6fc;
+            color: #1e2a38;
+            border-radius: 1.5rem;
+            box-shadow: 0 6px 14px rgba(0,0,0,0.3);
+            min-height: 220px;
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+        .email-card .field {
+            display: flex;
+            gap: 0.3rem;
+            flex-wrap: wrap;
+        }
+        .label {
+            font-weight: 600;
+            color: #1a3a5c;
+            min-width: 60px;
+        }
+        .value {
+            word-break: break-word;
+        }
+        .email-body {
+            margin-top: 0.5rem;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+
+        .actions {
+            display: flex;
+            gap: 1rem;
+            padding: 0 1.5rem 1.5rem;
+        }
+        .btn {
+            flex: 1;
+            padding: 1rem 0.5rem;
+            border: none;
+            border-radius: 1.5rem;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.1s, opacity 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.3rem;
+        }
+        .btn:active { transform: scale(0.97); }
+        .btn-phish {
+            background: #e53935;
+            color: white;
+        }
+        .btn-legit {
+            background: #2e7d32;
+            color: white;
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        /* --- Feedback Overlay --- */
+        .overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            padding: 1rem;
+        }
+        .overlay.hidden { display: none; }
+        .overlay-card {
+            background: #122b44;
+            border-radius: 2rem;
+            padding: 2rem;
+            max-width: 480px;
+            width: 100%;
+            text-align: center;
+            animation: pop 0.25s ease;
+        }
+        @keyframes pop {
+            0% { transform: scale(0.9); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .result-icon {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+        }
+        .red-flags {
+            text-align: left;
+            background: #1e2a38;
+            border-radius: 1rem;
+            padding: 1rem;
+            margin: 1rem 0;
+            list-style: none;
+        }
+        .red-flags li {
+            padding: 0.4rem 0;
+            border-bottom: 1px solid #334;
+            display: flex;
+            gap: 0.5rem;
+        }
+        .red-flags li:last-child { border-bottom: none; }
+        .tip-box {
+            font-style: italic;
+            background: #1a3a5c;
+            border-radius: 0.8rem;
+            padding: 0.8rem;
+            margin-top: 0.5rem;
+        }
+
+        .overlay .btn {
+            background: #4fc3f7;
+            color: #0b1a2f;
+            margin-top: 1rem;
+        }
+
+        /* --- Summary Screen --- */
+        .summary {
+            text-align: center;
+            padding: 2rem 1.5rem;
+        }
+        .summary h2 { font-size: 2rem; }
+        .summary .score {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin: 1rem 0;
+            color: #4fc3f7;
+        }
+        .summary .btn {
+            background: #4fc3f7;
+            color: #0b1a2f;
+            width: auto;
+            padding: 0.8rem 2rem;
+            margin: 0.5rem auto;
+            display: inline-flex;
+        }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <div class="app" id="app">
+        <!-- Start Screen -->
+        <div id="start-screen">
+            <div class="header">
+                <h1>🎣 Phish or Legit?</h1>
+                <p class="sub">Can you spot a phishing email?<br>Learn to protect yourself in 2 minutes.</p>
+            </div>
+            <div style="padding: 1.5rem; text-align: center;">
+                <button class="btn" style="background:#4fc3f7; color:#0b1a2f; width: auto; padding: 1rem 2rem; font-size:1.3rem;" id="start-btn">Start Game</button>
+            </div>
+        </div>
+
+        <!-- Game Screen (hidden initially) -->
+        <div id="game-screen" class="hidden">
+            <div class="header">
+                <h1>📧 Inbox</h1>
+            </div>
+            <div class="progress-area">
+                <span id="progress-text">1 / 6</span>
+                <div class="progress-bar-bg"><div class="progress-bar-fill" id="progress-fill" style="width:0%"></div></div>
+            </div>
+            <div class="email-card" id="email-card">
+                <div class="field"><span class="label">From:</span><span class="value" id="email-from"></span></div>
+                <div class="field"><span class="label">Subject:</span><span class="value" id="email-subject"></span></div>
+                <div class="email-body" id="email-body"></div>
+            </div>
+            <div class="actions">
+                <button class="btn btn-phish" id="btn-phish">⚠️ Phish</button>
+                <button class="btn btn-legit" id="btn-legit">✅ Legit</button>
+            </div>
+        </div>
+
+        <!-- Summary Screen (hidden until end) -->
+        <div id="summary-screen" class="hidden summary">
+            <h2>Game Over</h2>
+            <p id="summary-message"></p>
+            <div class="score" id="final-score"></div>
+            <button class="btn" id="replay-btn">🔄 Play Again</button>
+        </div>
+
+        <!-- Feedback Overlay -->
+        <div class="overlay hidden" id="feedback-overlay">
+            <div class="overlay-card">
+                <div class="result-icon" id="result-icon"></div>
+                <h3 id="result-title"></h3>
+                <ul class="red-flags" id="red-flags-list"></ul>
+                <div class="tip-box" id="tip-text"></div>
+                <button class="btn" id="next-btn">Next →</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // --- Scenario Data ---
+            const scenarios = [
+                {
+                    id: 1,
+                    from: "security@paypai.com",
+                    subject: "Your account has been limited",
+                    body: "Dear user, we detected unusual activity. Verify your account immediately or it will be suspended.\nClick: http://paypai.com/login",
+                    correctAnswer: "phish",
+                    redFlags: [
+                        "🔍 Sender domain is misspelled (paypai.com, not paypal.com)",
+                        "🚨 Urgency and threat of suspension",
+                        "🔗 Link domain does not match official PayPal"
+                    ],
+                    tip: "Always verify the sender's email address carefully and never click links in unexpected messages."
+                },
+                {
+                    id: 2,
+                    from: "noreply@amazon.com",
+                    subject: "Your order #112-3456789 has shipped",
+                    body: "Hello, your parcel is on its way! Track it here: https://amazon.com/your-orders\nEstimated delivery: April 28, 2026.",
+                    correctAnswer: "legit",
+                    redFlags: [],
+                    tip: "This looks genuine: the sender uses the official domain, there's no urgency or request for personal info. Always check the URL before clicking."
+                },
+                {
+                    id: 3,
+                    from: "netflix@confirm-update.com",
+                    subject: "Payment failed – update your billing",
+                    body: "Your Netflix subscription is on hold because we couldn't process your payment.\nPlease update your billing details within 24 hours: http://netflix-billing.com/update",
+                    correctAnswer: "phish",
+                    redFlags: [
+                        "🌐 Sender domain is not netflix.com",
+                        "⏳ Artificial deadline (24 hours) creates pressure",
+                        "🔗 Link goes to a fake domain (netflix-billing.com)"
+                    ],
+                    tip: "Log in directly through the official Netflix website or app – never through a link in an email."
+                },
+                {
+                    id: 4,
+                    from: "irs@tax-refund.gov",
+                    subject: "You are eligible for a tax refund",
+                    body: "Our records show you overpaid taxes. Click below to claim your refund of $850 within 48 hours.\nhttps://tax-refund.gov/claim?id=8821",
+                    correctAnswer: "phish",
+                    redFlags: [
+                        "🏛️ IRS uses irs.gov, not tax-refund.gov",
+                        "💸 Promise of money is a common lure",
+                        "⏰ 48-hour deadline to rush you"
+                    ],
+                    tip: "Government agencies won't email you asking for sensitive information. Visit official sites directly."
+                },
+                {
+                    id: 5,
+                    from: "dhl-delivery@dhl-service.com",
+                    subject: "Parcel held – pay customs fee",
+                    body: "Your package is waiting. Pay the $2.99 customs fee now to release it.\nhttp://dhl-service.com/pay?track=XE8821",
+                    correctAnswer: "phish",
+                    redFlags: [
+                        "📦 Sender domain mimics DHL (dhl-service.com)",
+                        "💰 Small fee seems harmless but steals card details",
+                        "🔗 Unofficial payment link"
+                    ],
+                    tip: "Check shipping notifications directly on the courier's official website, never pay through a link."
+                },
+                {
+                    id: 6,
+                    from: "no-reply@linkedin.com",
+                    subject: "You appeared in 3 searches this week",
+                    body: "Your profile is getting noticed! See who viewed your profile: https://linkedin.com/me/notifications/",
+                    correctAnswer: "legit",
+                    redFlags: [],
+                    tip: "The domain is correct (linkedin.com) and the message contains no request for login credentials. Still, always hover over links to double-check."
+                }
+            ];
+
+            // --- Game State ---
+            const TOTAL_ROUNDS = scenarios.length; // Use all 6 for demo
+            let currentRound = 0;
+            let score = 0;
+            let shuffled = [];
+
+            // DOM elements
+            const startScreen = document.getElementById('start-screen');
+            const gameScreen = document.getElementById('game-screen');
+            const summaryScreen = document.getElementById('summary-screen');
+            const feedbackOverlay = document.getElementById('feedback-overlay');
+            const startBtn = document.getElementById('start-btn');
+            const btnPhish = document.getElementById('btn-phish');
+            const btnLegit = document.getElementById('btn-legit');
+            const nextBtn = document.getElementById('next-btn');
+            const replayBtn = document.getElementById('replay-btn');
+            const progressText = document.getElementById('progress-text');
+            const progressFill = document.getElementById('progress-fill');
+            const emailFrom = document.getElementById('email-from');
+            const emailSubject = document.getElementById('email-subject');
+            const emailBody = document.getElementById('email-body');
+            const resultIcon = document.getElementById('result-icon');
+            const resultTitle = document.getElementById('result-title');
+            const redFlagsList = document.getElementById('red-flags-list');
+            const tipText = document.getElementById('tip-text');
+            const finalScore = document.getElementById('final-score');
+            const summaryMessage = document.getElementById('summary-message');
+
+            // --- Functions ---
+            function shuffleArray(arr) {
+                const a = [...arr];
+                for (let i = a.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [a[i], a[j]] = [a[j], a[i]];
+                }
+                return a;
+            }
+
+            function showScreen(screen) {
+                startScreen.classList.add('hidden');
+                gameScreen.classList.add('hidden');
+                summaryScreen.classList.add('hidden');
+                screen.classList.remove('hidden');
+            }
+
+            function updateProgress() {
+                progressText.textContent = `${currentRound + 1} / ${TOTAL_ROUNDS}`;
+                const percent = ((currentRound + 1) / TOTAL_ROUNDS) * 100;
+                progressFill.style.width = percent + '%';
+            }
+
+            function loadScenario(index) {
+                const s = shuffled[index];
+                emailFrom.textContent = s.from;
+                emailSubject.textContent = s.subject;
+                emailBody.textContent = s.body;
+                updateProgress();
+                // Enable buttons
+                btnPhish.disabled = false;
+                btnLegit.disabled = false;
+            }
+
+            function handleAnswer(userAnswer) {
+                const scenario = shuffled[currentRound];
+                const isCorrect = (userAnswer === scenario.correctAnswer);
+                if (isCorrect) score++;
+
+                // Disable buttons to prevent double-click
+                btnPhish.disabled = true;
+                btnLegit.disabled = true;
+
+                // Prepare feedback
+                if (scenario.correctAnswer === 'phish') {
+                    resultIcon.textContent = isCorrect ? '🎉' : '😬';
+                    resultTitle.textContent = isCorrect ? 'Correct! That was a phishing email.' : 'Oops! That was actually a phishing email.';
+                } else {
+                    resultIcon.textContent = isCorrect ? '🎉' : '😬';
+                    resultTitle.textContent = isCorrect ? 'Correct! That was a legitimate email.' : 'Oops! That email was actually safe.';
+                }
+
+                // Show red flags (if any)
+                redFlagsList.innerHTML = '';
+                if (scenario.redFlags.length > 0) {
+                    scenario.redFlags.forEach(flag => {
+                        const li = document.createElement('li');
+                        li.textContent = flag;
+                        redFlagsList.appendChild(li);
+                    });
+                } else {
+                    const li = document.createElement('li');
+                    li.textContent = '✅ No obvious red flags found.';
+                    redFlagsList.appendChild(li);
+                }
+
+                tipText.textContent = '💡 ' + scenario.tip;
+                feedbackOverlay.classList.remove('hidden');
+            }
+
+            function nextRound() {
+                feedbackOverlay.classList.add('hidden');
+                currentRound++;
+                if (currentRound < TOTAL_ROUNDS) {
+                    loadScenario(currentRound);
+                } else {
+                    showSummary();
+                }
+            }
+
+            function showSummary() {
+                showScreen(summaryScreen);
+                finalScore.textContent = `${score} / ${TOTAL_ROUNDS}`;
+                const pct = score / TOTAL_ROUNDS;
+                if (pct === 1) {
+                    summaryMessage.textContent = '🏆 Perfect! You are a phishing detective.';
+                } else if (pct >= 0.7) {
+                    summaryMessage.textContent = '👍 Great job! You spotted most scams.';
+                } else if (pct >= 0.4) {
+                    summaryMessage.textContent = '📘 Good start. Review the tips to sharpen your skills.';
+                } else {
+                    summaryMessage.textContent = '🛡️ Keep learning! Phishing scams are tricky, but practice makes you safer.';
+                }
+            }
+
+            function startGame() {
+                shuffled = shuffleArray(scenarios);
+                currentRound = 0;
+                score = 0;
+                showScreen(gameScreen);
+                loadScenario(0);
+            }
+
+            function resetGame() {
+                showScreen(startScreen);
+            }
+
+            // --- Event Listeners ---
+            startBtn.addEventListener('click', startGame);
+            btnPhish.addEventListener('click', () => handleAnswer('phish'));
+            btnLegit.addEventListener('click', () => handleAnswer('legit'));
+            nextBtn.addEventListener('click', nextRound);
+            replayBtn.addEventListener('click', startGame); // Replay goes directly to game
+
+            // Start on start screen
+            showScreen(startScreen);
+        })();
+    </script>
+</body>
+</html>
