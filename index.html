@@ -68,6 +68,13 @@
             border-radius: 3px;
         }
 
+        .help-text {
+            padding: 0.25rem 1.5rem 0;
+            font-size: 0.85rem;
+            opacity: 0.85;
+            text-align: center;
+        }
+
         .email-card {
             margin: 1.5rem;
             padding: 1.5rem;
@@ -119,13 +126,21 @@
             justify-content: center;
             gap: 0.3rem;
         }
+        .btn:hover:not(:disabled) {
+            filter: brightness(1.08);
+        }
+        .btn:focus-visible {
+            outline: 3px solid #fff3b0;
+            outline-offset: 3px;
+            box-shadow: 0 0 0 4px rgba(255, 243, 176, 0.35);
+        }
         .btn:active { transform: scale(0.97); }
         .btn-phish {
-            background: #e53935;
+            background: #b71c1c;
             color: white;
         }
         .btn-legit {
-            background: #2e7d32;
+            background: #1b5e20;
             color: white;
         }
         .btn:disabled {
@@ -137,7 +152,7 @@
         .overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7);
+            background: rgba(0,0,0,0.82);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -146,12 +161,13 @@
         }
         .overlay.hidden { display: none; }
         .overlay-card {
-            background: #122b44;
+            background: #0f253d;
             border-radius: 2rem;
             padding: 2rem;
             max-width: 480px;
             width: 100%;
             text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.08);
             animation: pop 0.25s ease;
         }
         @keyframes pop {
@@ -186,7 +202,7 @@
         }
 
         .overlay .btn {
-            background: #4fc3f7;
+            background: #90caf9;
             color: #0b1a2f;
             margin-top: 1rem;
         }
@@ -213,6 +229,33 @@
         }
 
         .hidden { display: none !important; }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+                scroll-behavior: auto !important;
+            }
+            .overlay-card {
+                animation: none;
+            }
+            .progress-bar-fill {
+                transition: none;
+            }
+        }
     </style>
 </head>
 <body>
@@ -237,14 +280,15 @@
                 <span id="progress-text">1 / 6</span>
                 <div class="progress-bar-bg"><div class="progress-bar-fill" id="progress-fill" style="width:0%"></div></div>
             </div>
+            <p class="help-text" id="keyboard-help">Keyboard shortcuts: ← Phish • → Legit</p>
             <div class="email-card" id="email-card">
                 <div class="field"><span class="label">From:</span><span class="value" id="email-from"></span></div>
                 <div class="field"><span class="label">Subject:</span><span class="value" id="email-subject"></span></div>
                 <div class="email-body" id="email-body"></div>
             </div>
             <div class="actions">
-                <button class="btn btn-phish" id="btn-phish">⚠️ Phish</button>
-                <button class="btn btn-legit" id="btn-legit">✅ Legit</button>
+                <button class="btn btn-phish" id="btn-phish" aria-keyshortcuts="ArrowLeft A 1">⚠️ Phish</button>
+                <button class="btn btn-legit" id="btn-legit" aria-keyshortcuts="ArrowRight L 2">✅ Legit</button>
             </div>
         </div>
 
@@ -257,8 +301,9 @@
         </div>
 
         <!-- Feedback Overlay -->
-        <div class="overlay hidden" id="feedback-overlay">
-            <div class="overlay-card">
+        <div class="overlay hidden" id="feedback-overlay" role="dialog" aria-modal="true" aria-labelledby="result-title" aria-describedby="feedback-announcer tip-text" aria-hidden="true">
+            <div class="overlay-card" tabindex="-1">
+                <div id="feedback-announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
                 <div class="result-icon" id="result-icon"></div>
                 <h3 id="result-title"></h3>
                 <ul class="red-flags" id="red-flags-list"></ul>
@@ -369,6 +414,7 @@
             const resultTitle = document.getElementById('result-title');
             const redFlagsList = document.getElementById('red-flags-list');
             const tipText = document.getElementById('tip-text');
+            const feedbackAnnouncer = document.getElementById('feedback-announcer');
             const finalScore = document.getElementById('final-score');
             const summaryMessage = document.getElementById('summary-message');
 
@@ -389,6 +435,17 @@
                 screen.classList.remove('hidden');
             }
 
+            function showFeedback() {
+                feedbackOverlay.classList.remove('hidden');
+                feedbackOverlay.setAttribute('aria-hidden', 'false');
+                nextBtn.focus();
+            }
+
+            function hideFeedback() {
+                feedbackOverlay.classList.add('hidden');
+                feedbackOverlay.setAttribute('aria-hidden', 'true');
+            }
+
             function updateProgress() {
                 progressText.textContent = `${currentRound + 1} / ${TOTAL_ROUNDS}`;
                 const percent = ((currentRound + 1) / TOTAL_ROUNDS) * 100;
@@ -404,6 +461,7 @@
                 // Enable buttons
                 btnPhish.disabled = false;
                 btnLegit.disabled = false;
+                btnPhish.focus();
             }
 
             function handleAnswer(userAnswer) {
@@ -439,11 +497,12 @@
                 }
 
                 tipText.textContent = '💡 ' + scenario.tip;
-                feedbackOverlay.classList.remove('hidden');
+                feedbackAnnouncer.textContent = `${resultTitle.textContent} ${scenario.redFlags.length ? scenario.redFlags.join(' ') : 'No obvious red flags found.'} ${scenario.tip}`;
+                showFeedback();
             }
 
             function nextRound() {
-                feedbackOverlay.classList.add('hidden');
+                hideFeedback();
                 currentRound++;
                 if (currentRound < TOTAL_ROUNDS) {
                     loadScenario(currentRound);
@@ -465,6 +524,7 @@
                 } else {
                     summaryMessage.textContent = '🛡️ Keep learning! Phishing scams are tricky, but practice makes you safer.';
                 }
+                replayBtn.focus();
             }
 
             function startGame() {
@@ -475,8 +535,21 @@
                 loadScenario(0);
             }
 
-            function resetGame() {
-                showScreen(startScreen);
+            function handleKeyboardShortcuts(event) {
+                const key = event.key.toLowerCase();
+                if (!feedbackOverlay.classList.contains('hidden')) {
+                    return;
+                }
+
+                if (!gameScreen.classList.contains('hidden')) {
+                    if (key === 'arrowleft' || key === 'a' || key === '1') {
+                        event.preventDefault();
+                        btnPhish.click();
+                    } else if (key === 'arrowright' || key === 'l' || key === '2') {
+                        event.preventDefault();
+                        btnLegit.click();
+                    }
+                }
             }
 
             // --- Event Listeners ---
@@ -485,9 +558,11 @@
             btnLegit.addEventListener('click', () => handleAnswer('legit'));
             nextBtn.addEventListener('click', nextRound);
             replayBtn.addEventListener('click', startGame); // Replay goes directly to game
+            document.addEventListener('keydown', handleKeyboardShortcuts);
 
             // Start on start screen
             showScreen(startScreen);
+            startBtn.focus();
         })();
     </script>
 </body>
