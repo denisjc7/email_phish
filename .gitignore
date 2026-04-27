@@ -14,9 +14,18 @@ pnpm-debug.log*
 .env.*.local
 
 # Test/coverage output (if you add tests later)
-coverage/# Include your project-specific ignores in this file
-# Read about how to use .gitignore: https://help.github.com/articles/ignoring-files
-# Useful .gitignore templates: https://github.com/github/gitignore
+coverage/
+
+# Dependency / build output
 node_modules
 dist
 .cache
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+
+# Keep the main page tracked even if broader ignore rules are added later
+!index.html
+
