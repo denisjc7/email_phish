@@ -28,4 +28,5 @@ dist
 
 # Keep the main page tracked even if broader ignore rules are added later
 !index.html
+!README.md
 
