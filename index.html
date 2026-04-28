@@ -241,6 +241,47 @@
             white-space: nowrap;
             border: 0;
         }
+        .difficulty-bar {
+            display: flex;
+            gap: 0.25rem;
+            justify-content: center;
+            margin: 0.75rem 0;
+        }
+        .difficulty-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.25);
+        }
+        .difficulty-dot.filled {
+            background: #ff9100;
+        }
+        .difficulty-label {
+            font-size: 0.75rem;
+            opacity: 0.8;
+            margin-top: 0.25rem;
+        }
+
+        .explanation-box, .action-box {
+            text-align: left;
+            background: rgba(144, 202, 249, 0.08);
+            border-left: 3px solid #90caf9;
+            border-radius: 0.5rem;
+            padding: 0.8rem;
+            margin: 0.75rem 0;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+        .explanation-box strong, .action-box strong {
+            color: #90caf9;
+        }
+        .action-box {
+            background: rgba(76, 175, 80, 0.08);
+            border-left-color: #4caf50;
+        }
+        .action-box strong {
+            color: #4caf50;
+        }
 
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after {
@@ -306,8 +347,12 @@
                 <div id="feedback-announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
                 <div class="result-icon" id="result-icon"></div>
                 <h3 id="result-title"></h3>
+                <div class="difficulty-bar" id="difficulty-bar"></div>
+                <div class="difficulty-label" id="difficulty-label"></div>
+                <div class="explanation-box"><strong>Why?</strong> <span id="explanation-text"></span></div>
                 <ul class="red-flags" id="red-flags-list"></ul>
                 <div class="tip-box" id="tip-text"></div>
+                <div class="action-box"><strong>💡 What to do:</strong> <span id="action-text"></span></div>
                 <button class="btn" id="next-btn">Next →</button>
             </div>
         </div>
@@ -323,6 +368,9 @@
                     subject: "Your account has been limited",
                     body: "Dear user, we detected unusual activity. Verify your account immediately or it will be suspended.\nClick: http://paypai.com/login",
                     correctAnswer: "phish",
+                    difficulty: 2,
+                    explanation: "This email uses a common tactic: domain misspelling (paypai instead of paypal) combined with urgency and fear (account suspension). Legitimate PayPal always uses @paypal.com addresses.",
+                    action: "If you get similar emails, go directly to the official website by typing the URL yourself or using a trusted bookmark. Never click links in unsolicited emails.",
                     redFlags: [
                         "🔍 Sender domain is misspelled (paypai.com, not paypal.com)",
                         "🚨 Urgency and threat of suspension",
@@ -336,6 +384,9 @@
                     subject: "Your order #112-3456789 has shipped",
                     body: "Hello, your parcel is on its way! Track it here: https://amazon.com/your-orders\nEstimated delivery: April 28, 2026.",
                     correctAnswer: "legit",
+                    difficulty: 1,
+                    explanation: "This is legitimate because it uses the correct domain (amazon.com), contains an order number you might have, and asks no sensitive information. The tracking URL points to an official Amazon page.",
+                    action: "You can safely click tracking links from official companies for notifications you expect. When in doubt, log in directly to your account.",
                     redFlags: [],
                     tip: "This looks genuine: the sender uses the official domain, there's no urgency or request for personal info. Always check the URL before clicking."
                 },
@@ -345,6 +396,9 @@
                     subject: "Payment failed – update your billing",
                     body: "Your Netflix subscription is on hold because we couldn't process your payment.\nPlease update your billing details within 24 hours: http://netflix-billing.com/update",
                     correctAnswer: "phish",
+                    difficulty: 3,
+                    explanation: "The sender domain (confirm-update.com) is fake, though it sounds plausible. The artificial 24-hour deadline creates pressure to act without thinking. Netflix's real domain is netflix.com.",
+                    action: "Log into Netflix through the official app or website to check your account status. Never provide payment info through email links.",
                     redFlags: [
                         "🌐 Sender domain is not netflix.com",
                         "⏳ Artificial deadline (24 hours) creates pressure",
@@ -358,6 +412,9 @@
                     subject: "You are eligible for a tax refund",
                     body: "Our records show you overpaid taxes. Click below to claim your refund of $850 within 48 hours.\nhttps://tax-refund.gov/claim?id=8821",
                     correctAnswer: "phish",
+                    difficulty: 2,
+                    explanation: "Tax agencies never initiate contact via email about refunds. This uses financial incentive (money owed to you) to lower your guard. Real IRS uses irs.gov, not tax-refund.gov.",
+                    action: "Check your tax status on irs.gov directly. If you owe a refund, the IRS will notify you by mail with an official form.",
                     redFlags: [
                         "🏛️ IRS uses irs.gov, not tax-refund.gov",
                         "💸 Promise of money is a common lure",
@@ -371,6 +428,9 @@
                     subject: "Parcel held – pay customs fee",
                     body: "Your package is waiting. Pay the $2.99 customs fee now to release it.\nhttp://dhl-service.com/pay?track=XE8821",
                     correctAnswer: "phish",
+                    difficulty: 3,
+                    explanation: "This is tricky because a small fee ($2.99) seems harmless, and many people do receive customs notices. But DHL always uses @dhl.com, and won't ask you to pay via email links.",
+                    action: "For package issues, check the carrier's website directly using their official app or website. Never pay through links in emails.",
                     redFlags: [
                         "📦 Sender domain mimics DHL (dhl-service.com)",
                         "💰 Small fee seems harmless but steals card details",
@@ -384,6 +444,9 @@
                     subject: "You appeared in 3 searches this week",
                     body: "Your profile is getting noticed! See who viewed your profile: https://linkedin.com/me/notifications/",
                     correctAnswer: "legit",
+                    difficulty: 1,
+                    explanation: "This is legitimate: the sender domain is correct (linkedin.com), the message is personalized, and it asks nothing sensitive. The link points to an official LinkedIn page.",
+                    action: "LinkedIn profile notifications are safe to click. You can also log into LinkedIn directly to see profile visitors.",
                     redFlags: [],
                     tip: "The domain is correct (linkedin.com) and the message contains no request for login credentials. Still, always hover over links to double-check."
                 }
@@ -464,6 +527,23 @@
                 btnPhish.focus();
             }
 
+
+            function renderDifficultyBar(difficulty) {
+                const bar = document.getElementById('difficulty-bar');
+                const label = document.getElementById('difficulty-label');
+                bar.innerHTML = '';
+                for (let i = 1; i <= 3; i++) {
+                    const dot = document.createElement('div');
+                    dot.className = 'difficulty-dot';
+                    if (i <= difficulty) {
+                        dot.classList.add('filled');
+                    }
+                    bar.appendChild(dot);
+                }
+                const diffLabels = ['Easy', 'Medium', 'Tricky'];
+                label.textContent = diffLabels[Math.min(difficulty - 1, 2)] + ' Email';
+            }
+
             function handleAnswer(userAnswer) {
                 const scenario = shuffled[currentRound];
                 const isCorrect = (userAnswer === scenario.correctAnswer);
@@ -482,6 +562,12 @@
                     resultTitle.textContent = isCorrect ? 'Correct! That was a legitimate email.' : 'Oops! That email was actually safe.';
                 }
 
+                // Render difficulty indicator
+                renderDifficultyBar(scenario.difficulty || 2);
+
+                // Show explanation
+                document.getElementById('explanation-text').textContent = scenario.explanation || 'Pay attention to the sender, links, and urgency tactics.';
+
                 // Show red flags (if any)
                 redFlagsList.innerHTML = '';
                 if (scenario.redFlags.length > 0) {
@@ -496,8 +582,14 @@
                     redFlagsList.appendChild(li);
                 }
 
+                // Show tip
                 tipText.textContent = '💡 ' + scenario.tip;
-                feedbackAnnouncer.textContent = `${resultTitle.textContent} ${scenario.redFlags.length ? scenario.redFlags.join(' ') : 'No obvious red flags found.'} ${scenario.tip}`;
+
+                // Show recommended action
+                document.getElementById('action-text').textContent = scenario.action || 'When in doubt, verify through official channels.';
+
+                // Update screen reader announcement
+                feedbackAnnouncer.textContent = `${resultTitle.textContent} Difficulty: ${scenario.difficulty || 2} out of 3. ${scenario.explanation} ${scenario.redFlags.length ? scenario.redFlags.join(' ') : 'No obvious red flags.'} ${scenario.action}`;
                 showFeedback();
             }
 
