@@ -441,19 +441,19 @@
             const scenarios = [
                 {
                     id: 1,
-                    from: "security@paypai.com",
-                    subject: "Your account has been limited",
-                    body: "Dear user, we detected unusual activity. Verify your account immediately or it will be suspended.\nClick: http://paypai.com/login",
+                    from: "PayPal Security <security@paypal.com.security-checks.com>",
+                    subject: "Unusual sign-in activity on your account",
+                    body: "We detected a login from a new device in Montreal, Canada. Review activity to keep your account secure:\nhttps://paypal.com.security-checks.com/login",
                     correctAnswer: "phish",
                     difficulty: 2,
-                    explanation: "This email uses a common tactic: domain misspelling (paypai instead of paypal) combined with urgency and fear (account suspension). Legitimate PayPal always uses @paypal.com addresses.",
-                    action: "If you get similar emails, go directly to the official website by typing the URL yourself or using a trusted bookmark. Never click links in unsolicited emails.",
+                    explanation: "This one is more realistic because the sender name looks legitimate and the domain contains paypal.com at first glance. The real registered domain is security-checks.com, not paypal.com.",
+                    action: "When you get a security alert, do not use the link in the email. Open the service manually in your browser or app and check recent activity there.",
                     redFlags: [
-                        "🔍 Sender domain is misspelled (paypai.com, not paypal.com)",
-                        "🚨 Urgency and threat of suspension",
-                        "🔗 Link domain does not match official PayPal"
+                        "🔍 Display name imitates PayPal support",
+                        "🌐 Registered domain is security-checks.com, not paypal.com",
+                        "🔗 The link is a lookalike domain rather than paypal.com"
                     ],
-                    tip: "Always verify the sender's email address carefully and never click links in unexpected messages."
+                    tip: "Look beyond the display name. Check the full domain carefully and navigate to the site yourself when in doubt."
                 },
                 {
                     id: 2,
@@ -469,19 +469,19 @@
                 },
                 {
                     id: 3,
-                    from: "netflix@confirm-update.com",
-                    subject: "Payment failed – update your billing",
-                    body: "Your Netflix subscription is on hold because we couldn't process your payment.\nPlease update your billing details within 24 hours: http://netflix-billing.com/update",
+                    from: "Microsoft Account Team <account-security@microsoft-verify.com>",
+                    subject: "You've been signed out from one of your devices",
+                    body: "We noticed sign-in activity from a Windows PC in another city. If this wasn't you, verify your account within 12 hours:\nhttps://microsoft-verify.com/security",
                     correctAnswer: "phish",
                     difficulty: 3,
-                    explanation: "The sender domain (confirm-update.com) is fake, though it sounds plausible. The artificial 24-hour deadline creates pressure to act without thinking. Netflix's real domain is netflix.com.",
-                    action: "Log into Netflix through the official app or website to check your account status. Never provide payment info through email links.",
+                    explanation: "This example avoids obvious typos and uses a believable account-security story. The domain looks close to Microsoft, but the real domain is microsoft-verify.com rather than microsoft.com.",
+                    action: "Always open Microsoft directly through the official website or app, then review recent sign-ins from there.",
                     redFlags: [
-                        "🌐 Sender domain is not netflix.com",
-                        "⏳ Artificial deadline (24 hours) creates pressure",
-                        "🔗 Link goes to a fake domain (netflix-billing.com)"
+                        "🔍 Sender name mimics Microsoft Account Team",
+                        "🌐 Domain is microsoft-verify.com, not microsoft.com",
+                        "⏳ The 12-hour deadline adds pressure"
                     ],
-                    tip: "Log in directly through the official Netflix website or app – never through a link in an email."
+                    tip: "Security alerts can look convincing. Check the sender domain and verify account activity from the official app or website."
                 },
                 {
                     id: 4,
@@ -517,15 +517,47 @@
                 },
                 {
                     id: 6,
-                    from: "no-reply@linkedin.com",
-                    subject: "You appeared in 3 searches this week",
-                    body: "Your profile is getting noticed! See who viewed your profile: https://linkedin.com/me/notifications/",
+                    from: "LinkedIn Security <security@linkedin.com>",
+                    subject: "New sign-in detected",
+                    body: "We noticed a sign-in from Safari on macOS. If this wasn't you, review your recent activity in LinkedIn:\nhttps://linkedin.com/security",
                     correctAnswer: "legit",
                     difficulty: 1,
-                    explanation: "This is legitimate: the sender domain is correct (linkedin.com), the message is personalized, and it asks nothing sensitive. The link points to an official LinkedIn page.",
-                    action: "LinkedIn profile notifications are safe to click. You can also log into LinkedIn directly to see profile visitors.",
+                    explanation: "This is technically safe because it uses the official linkedin.com domain and points to a LinkedIn page. It still feels suspicious because it is security-related, so the safest habit is to confirm it by logging in directly.",
+                    action: "Open LinkedIn yourself rather than clicking the link if the message makes you uneasy. That way you can confirm the sign-in alert from the official site.",
                     redFlags: [],
-                    tip: "The domain is correct (linkedin.com) and the message contains no request for login credentials. Still, always hover over links to double-check."
+                    tip: "A real security alert can still feel alarming. When the domain is official, verify the alert from the app or website before taking action."
+                },
+                {
+                    id: 7,
+                    from: "HR Team <hr@company-portal.com>",
+                    subject: "Updated PTO policy – acknowledgment required",
+                    body: "Hi team,\n\nWe've updated the PTO policy for 2026. Please review and acknowledge by end of day.\nOpen document: https://company-portal.com/hr/pto-policy\n\nThanks,\nHR Operations",
+                    correctAnswer: "phish",
+                    difficulty: 3,
+                    explanation: "This looks internal and uses a reasonable subject line. The domain is not your actual corporate domain and the urgency (end of day) pressures fast action.",
+                    action: "If you receive internal policy updates, access them through your official HR portal or intranet. Verify via a known internal channel.",
+                    redFlags: [
+                        "🏷️ Looks internal but uses an unfamiliar domain",
+                        "⏳ Same-day deadline adds pressure",
+                        "🔗 Link goes to a non-corporate site"
+                    ],
+                    tip: "Internal lures are common. Always verify the sender domain and use your company's official portal."
+                },
+                {
+                    id: 8,
+                    from: "Billing <billing@northwind-invoices.com>",
+                    subject: "Invoice #78124 – payment reminder",
+                    body: "Hello,\n\nThis is a friendly reminder that invoice #78124 is past due. Please remit payment to avoid service interruption.\nView invoice: https://northwind-invoices.com/78124\n\nThank you,\nNorthwind Billing",
+                    correctAnswer: "phish",
+                    difficulty: 3,
+                    explanation: "Invoice lures are subtle because they feel routine. The domain is plausible but not the known vendor domain, and the message pushes quick payment action.",
+                    action: "Verify invoices through your normal vendor portal or accounting system. Never pay based solely on an emailed link.",
+                    redFlags: [
+                        "🧾 Domain looks plausible but isn’t a known vendor domain",
+                        "💸 Payment urgency without prior context",
+                        "🔗 Invoice link leads off the usual portal"
+                    ],
+                    tip: "Invoice scams rely on routine behavior. Always verify vendor domains and use your regular payment workflow."
                 }
             ];
 
@@ -719,6 +751,10 @@
                 }
 
                 // Build results breakdown
+                const existingBreakdown = summaryScreen.querySelector('.results-breakdown');
+                if (existingBreakdown) {
+                    existingBreakdown.remove();
+                }
                 const breakdown = document.createElement('div');
                 breakdown.className = 'results-breakdown';
                 breakdown.innerHTML = '<h4>Results Breakdown</h4>';
