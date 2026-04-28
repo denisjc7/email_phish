@@ -52,6 +52,17 @@
             align-items: center;
             font-size: 0.9rem;
         }
+        .progress-status {
+            background: rgba(79, 195, 247, 0.1);
+            border: 1px solid rgba(79, 195, 247, 0.3);
+            border-radius: 1rem;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #4fc3f7;
+            text-align: center;
+            margin: 0.5rem 1.5rem 0.5rem;
+        }
         .progress-bar-bg {
             flex: 1;
             height: 6px;
@@ -160,6 +171,16 @@
             padding: 1rem;
         }
         .overlay.hidden { display: none; }
+        .overlay:not(.hidden)::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: -1;
+            pointer-events: auto;
+        }
         .overlay-card {
             background: #0f253d;
             border-radius: 2rem;
@@ -169,10 +190,19 @@
             text-align: center;
             border: 1px solid rgba(255, 255, 255, 0.08);
             animation: pop 0.25s ease;
+            pointer-events: auto;
         }
         @keyframes pop {
             0% { transform: scale(0.9); opacity: 0; }
             100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes pulse-success {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .result-icon.completed {
+            animation: pulse-success 0.6s ease-out;
         }
         .result-icon {
             font-size: 3rem;
@@ -283,6 +313,51 @@
             color: #4caf50;
         }
 
+        .results-breakdown {
+            background: #1e2a38;
+            border-radius: 1rem;
+            padding: 1rem;
+            margin: 1rem 0;
+            text-align: left;
+        }
+        .results-breakdown h4 {
+            font-size: 0.9rem;
+            color: #90caf9;
+            margin-bottom: 0.75rem;
+            text-align: center;
+        }
+        .result-item {
+            padding: 0.5rem;
+            margin: 0.25rem 0;
+            background: rgba(79, 195, 247, 0.05);
+            border-radius: 0.5rem;
+            font-size: 0.9rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .result-item.correct {
+            border-left: 3px solid #4caf50;
+        }
+        .result-item.incorrect {
+            border-left: 3px solid #ff9100;
+        }
+        .result-badge {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 0.4rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .result-badge.correct {
+            background: #4caf50;
+            color: white;
+        }
+        .result-badge.incorrect {
+            background: #ff9100;
+            color: white;
+        }
+
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after {
                 animation-duration: 0.01ms !important;
@@ -321,6 +396,7 @@
                 <span id="progress-text">1 / 6</span>
                 <div class="progress-bar-bg"><div class="progress-bar-fill" id="progress-fill" style="width:0%"></div></div>
             </div>
+            <div class="progress-status" id="progress-status">Round 1 of 6</div>
             <p class="help-text" id="keyboard-help">Keyboard shortcuts: ← Phish • → Legit</p>
             <div class="email-card" id="email-card">
                 <div class="field"><span class="label">From:</span><span class="value" id="email-from"></span></div>
@@ -345,13 +421,14 @@
         <div class="overlay hidden" id="feedback-overlay" role="dialog" aria-modal="true" aria-labelledby="result-title" aria-describedby="feedback-announcer tip-text" aria-hidden="true">
             <div class="overlay-card" tabindex="-1">
                 <div id="feedback-announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
-                <div class="result-icon" id="result-icon"></div>
+                <div class="result-icon" id="result-icon" role="img" aria-label="Result"></div>
                 <h3 id="result-title"></h3>
                 <div class="difficulty-bar" id="difficulty-bar"></div>
                 <div class="difficulty-label" id="difficulty-label"></div>
                 <div class="explanation-box"><strong>Why?</strong> <span id="explanation-text"></span></div>
                 <ul class="red-flags" id="red-flags-list"></ul>
                 <div class="tip-box" id="tip-text"></div>
+                <div class="results-breakdown hidden" id="correct-answer-info"></div>
                 <div class="action-box"><strong>💡 What to do:</strong> <span id="action-text"></span></div>
                 <button class="btn" id="next-btn">Next →</button>
             </div>
@@ -457,6 +534,7 @@
             let currentRound = 0;
             let score = 0;
             let shuffled = [];
+            let roundResults = [];
 
             // DOM elements
             const startScreen = document.getElementById('start-screen');
@@ -470,6 +548,7 @@
             const replayBtn = document.getElementById('replay-btn');
             const progressText = document.getElementById('progress-text');
             const progressFill = document.getElementById('progress-fill');
+            const progressStatus = document.getElementById('progress-status');
             const emailFrom = document.getElementById('email-from');
             const emailSubject = document.getElementById('email-subject');
             const emailBody = document.getElementById('email-body');
@@ -513,6 +592,7 @@
                 progressText.textContent = `${currentRound + 1} / ${TOTAL_ROUNDS}`;
                 const percent = ((currentRound + 1) / TOTAL_ROUNDS) * 100;
                 progressFill.style.width = percent + '%';
+                progressStatus.textContent = `Round ${currentRound + 1} of ${TOTAL_ROUNDS}`;
             }
 
             function loadScenario(index) {
@@ -549,6 +629,14 @@
                 const isCorrect = (userAnswer === scenario.correctAnswer);
                 if (isCorrect) score++;
 
+                // Track this round's result
+                roundResults.push({
+                    round: currentRound + 1,
+                    scenario: scenario,
+                    userAnswer: userAnswer,
+                    isCorrect: isCorrect
+                });
+
                 // Disable buttons to prevent double-click
                 btnPhish.disabled = true;
                 btnLegit.disabled = true;
@@ -562,11 +650,24 @@
                     resultTitle.textContent = isCorrect ? 'Correct! That was a legitimate email.' : 'Oops! That email was actually safe.';
                 }
 
+                // Add completion animation
+                resultIcon.classList.add('completed');
+
                 // Render difficulty indicator
                 renderDifficultyBar(scenario.difficulty || 2);
 
                 // Show explanation
                 document.getElementById('explanation-text').textContent = scenario.explanation || 'Pay attention to the sender, links, and urgency tactics.';
+
+                // Show correct answer info if they got it wrong
+                const correctAnswerInfo = document.getElementById('correct-answer-info');
+                if (!isCorrect) {
+                    const correctLabel = scenario.correctAnswer === 'phish' ? '⚠️ Phish' : '✅ Legit';
+                    correctAnswerInfo.innerHTML = `<h4>Correct Answer</h4><span>${correctLabel}</span>`;
+                    correctAnswerInfo.classList.remove('hidden');
+                } else {
+                    correctAnswerInfo.classList.add('hidden');
+                }
 
                 // Show red flags (if any)
                 redFlagsList.innerHTML = '';
@@ -616,6 +717,23 @@
                 } else {
                     summaryMessage.textContent = '🛡️ Keep learning! Phishing scams are tricky, but practice makes you safer.';
                 }
+
+                // Build results breakdown
+                const breakdown = document.createElement('div');
+                breakdown.className = 'results-breakdown';
+                breakdown.innerHTML = '<h4>Results Breakdown</h4>';
+                roundResults.forEach(result => {
+                    const item = document.createElement('div');
+                    item.className = `result-item ${result.isCorrect ? 'correct' : 'incorrect'}`;
+                    const badge = document.createElement('span');
+                    badge.className = `result-badge ${result.isCorrect ? 'correct' : 'incorrect'}`;
+                    badge.textContent = result.isCorrect ? '✓ Correct' : '✗ Incorrect';
+                    item.innerHTML = `<span>Round ${result.round}: ${result.isCorrect ? '✓' : '✗'}</span>`;
+                    item.appendChild(badge);
+                    breakdown.appendChild(item);
+                });
+                summaryScreen.insertBefore(breakdown, replayBtn);
+
                 replayBtn.focus();
             }
 
@@ -623,12 +741,14 @@
                 shuffled = shuffleArray(scenarios);
                 currentRound = 0;
                 score = 0;
+                roundResults = [];
                 showScreen(gameScreen);
                 loadScenario(0);
             }
 
             function handleKeyboardShortcuts(event) {
                 const key = event.key.toLowerCase();
+                // Prevent any keyboard action when feedback overlay is open
                 if (!feedbackOverlay.classList.contains('hidden')) {
                     return;
                 }
@@ -643,6 +763,16 @@
                     }
                 }
             }
+
+            // Prevent closing overlay by clicking the background
+            feedbackOverlay.addEventListener('click', function(e) {
+                if (e.target === feedbackOverlay) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    // Silently ignore - don't close the overlay
+                    return false;
+                }
+            });
 
             // --- Event Listeners ---
             startBtn.addEventListener('click', startGame);
